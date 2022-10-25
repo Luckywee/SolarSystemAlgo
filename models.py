@@ -29,3 +29,14 @@ class Planet:
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, self.pos, self.radius)
+
+class MyRect:
+    def __init__(self, left, top, color=(0,255,0), width=5, height=5) -> None:
+        self.left = left
+        self.top = top
+        self.width = width
+        self.height = height
+        self.color = color
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, pygame.Rect(self.left, self.top, self.width, self.height))
