@@ -4,33 +4,38 @@ from utili import *
 from models import MyRect
 
 
-def selectGame(nbButton: int):
-    if nbButton == 1:
-        telescopeGame()
+def selectGame(nbButton: int, screen, clock, allPlanetsJSON):
+    if nbButton == 0:
+        telescopeGame(screen, clock, allPlanetsJSON)
+    elif nbButton == 1:
+        planetMapsGame(screen, clock)
     elif nbButton == 2:
-        planetMapsGame()
-    elif nbButton == 3:
-        gravityJumpGame()
+        gravityJumpGame(screen, clock)
     else:
         print("Error")
         return
 
 
-def loadingScreen(screen, clock, font):
-    widthTxtRect = 400
-    heightTxtRect = 100
-    button = Button(
-        "Loading...",
-        screen.get_width() / 2 - widthTxtRect / 2,
-        screen.get_height() / 2 - heightTxtRect / 2,
-        widthTxtRect,
-        heightTxtRect,
-        BLACK,
-        False,
-        WHITE,
+def loadingScreen(screen, clock, font: pygame.font.Font):
+    loadingTxt = font.render("Loading...", True, WHITE)
+    screen.blit(
+        loadingTxt,
+        (
+            screen.get_width() / 2 - loadingTxt.get_width() / 2,
+            screen.get_height() / 2 - loadingTxt.get_height() / 2,
+        ),
     )
-    button.draw(screen, font)
-    clock.tick(100)
+    warningTxt = font.render("(do not click anything anywhere)", True, WHITE)
+    screen.blit(
+        warningTxt,
+        (
+            screen.get_width() / 2 - warningTxt.get_width() / 2,
+            screen.get_height() / 2
+            - warningTxt.get_height() / 2
+            + loadingTxt.get_height() * 1.5,
+        ),
+    )
+    clock.tick(FPS)
     pygame.display.flip()
 
 
@@ -51,16 +56,16 @@ def backgroundTransition(screen, clock, firstImageRects):
 
         for j in range(100):
             i += 1
-            if i > len(firstImageRects) - 1:
+            if i > len(firstImageRects):
                 affichage = False
                 break
-            firstImageRects[i].draw(screen)
+            firstImageRects[i - 1].draw(screen)
 
-        clock.tick(100)
+        clock.tick(FPS)
         pygame.display.flip()
 
 
-def mainMenu(screen: pygame.Surface, clock, font, w, h):
+def mainMenu(screen: pygame.Surface, clock, font, w, h, allPlanetsJSON):
     affichage = True
     widthTxtRect = w / 4
     heightTxtRect = h / 10
@@ -68,7 +73,7 @@ def mainMenu(screen: pygame.Surface, clock, font, w, h):
     button1 = Button(
         "Telescope",
         w / 2 - widthTxtRect / 2,
-        h / 8 * 7 - heightTxtRect / 2,
+        h / 8 * 3 - heightTxtRect / 2,
         widthTxtRect,
         heightTxtRect,
     )
@@ -84,7 +89,7 @@ def mainMenu(screen: pygame.Surface, clock, font, w, h):
     button3 = Button(
         "Gravity jump",
         w / 2 - widthTxtRect / 2,
-        h / 8 * 3 - heightTxtRect / 2,
+        h / 8 * 7 - heightTxtRect / 2,
         widthTxtRect,
         heightTxtRect,
     )
@@ -115,20 +120,58 @@ def mainMenu(screen: pygame.Surface, clock, font, w, h):
                 mousePos = pygame.mouse.get_pos()
                 for i_button in range(len(buttons)):
                     if buttons[i_button].getRect.collidepoint(mousePos):
-                        selectGame(i_button)
+                        selectGame(i_button, screen, clock, allPlanetsJSON)
 
-        clock.tick(100)
+        clock.tick(FPS)
         pygame.display.flip()
 
 
-def telescopeGame():
+def telescopeGame(screen: pygame.Surface, clock, allPlanetsJSON: List[Planet]):
+    allPlanets = filterFormatAllBodies(
+        allPlanetsJSON,
+        screen.get_width(),
+        screen.get_height(),
+    )
+    speedMultiplier = 1
+    affichage = True
+    while affichage:
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                affichage = False
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    affichage = False
+                    pygame.quit()
+                    exit()
+                if event.key == pygame.K_UP:
+                    speedMultiplier *= 10
+                    allPlanets = filterFormatAllBodies(
+                        allPlanetsJSON,
+                        screen.get_width(),
+                        screen.get_height(),
+                        speedMultiplier=speedMultiplier,
+                    )
+                if event.key == pygame.K_DOWN:
+                    speedMultiplier /= 10
+                    allPlanets = filterFormatAllBodies(
+                        allPlanetsJSON,
+                        screen.get_width(),
+                        screen.get_height(),
+                        speedMultiplier=speedMultiplier,
+                    )
+        for planet in allPlanets:
+            planet.draw(screen)
+            planet.update(screen)
+        clock.tick(FPS)
+        pygame.display.flip()
 
+
+def planetMapsGame(screen, clock):
     pass
 
 
-def planetMapsGame():
-    pass
-
-
-def gravityJumpGame():
+def gravityJumpGame(screen, clock):
     pass

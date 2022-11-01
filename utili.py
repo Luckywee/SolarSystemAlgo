@@ -19,40 +19,86 @@ def crossMultiplication(nb1, nb2, nb3):
     return nb3 * nb2 / nb1
 
 
-def filterFormatAllBodies(allBodiesJson, w, h, planets=False, sun=False):
+def filterFormatAllBodies(
+    allBodiesJson,
+    w,
+    h,
+    planets=True,
+    sun=True,
+    speedMultiplier=1,
+    scaledPos=False,
+    scaledRadius=False,
+):
     bodiesJson = []
     for planet in allBodiesJson:
         if planets:
             if planet["bodyType"] == "Planet":
                 bodiesJson.append(planet)
-        elif sun:
+        if sun:
             if planet["id"] == "soleil":
                 bodiesJson.append(planet)
 
     furthest = max(map(lambda x: (x["perihelion"] + x["aphelion"]) / 2, bodiesJson))
     biggest = max(map(lambda x: x["meanRadius"], bodiesJson))
+    bodiesJson.sort(key=lambda x: (x["perihelion"] + x["aphelion"]), reverse=False)
     allBodies = []
-    for planet in bodiesJson:
-        allBodies.append(formatPlanet(planet, biggest, furthest, w, h))
+    for i_planet in range(len(bodiesJson)):
+        allBodies.append(
+            formatPlanet(
+                bodiesJson[i_planet],
+                biggest,
+                furthest,
+                w,
+                h,
+                i_planet,
+                len(bodiesJson),
+                speedMultiplier,
+                scaledPos,
+                scaledRadius,
+            )
+        )
 
     return allBodies
 
 
-def formatPlanet(planet, biggest, furthest, w, h):
+def formatPlanet(
+    planet,
+    biggest,
+    furthest,
+    w,
+    h,
+    i_planet,
+    nbTotal,
+    speedMultiplier,
+    scaledPos,
+    scaledRadius,
+):
     distanceFromSun = (planet["perihelion"] + planet["aphelion"]) / 2
-    circonference = 2 * pi * distanceFromSun
-    timeToRotate = planet["sideralOrbit"] * 24
-    speed = circonference / timeToRotate if timeToRotate > 0 else 0
-    radius = crossMultiplication(biggest, 50, planet["meanRadius"])
-    posX = crossMultiplication(furthest, w * 0.95, distanceFromSun)
+    secToRotate = planet["sideralOrbit"] * 24 * 60 * 60
+    deltaAngleReal = (2 * pi / (secToRotate * FPS)) if secToRotate != 0 else 0
+    deltaAngle = deltaAngleReal * speedMultiplier
+    print(planet["name"], PlanetColor[planet["id"]].value)
+    if scaledRadius:
+        radius = crossMultiplication(biggest, 50, planet["meanRadius"])
+    else:
+        radius = 15
+
+    if scaledPos:
+        posX = crossMultiplication(furthest, w / 2 * 0.95, distanceFromSun) + w / 2
+        posY = h / 2
+    else:
+        posX = i_planet * (w / 2 / nbTotal) + w / 2
+        posY = h / 2
+    distanceFromSun = posX - w / 2
     posY = h / 2
-    # , distanceFromSun = distanceFromSun, speed = speed, radius=planet["meanRadius"]
     return Planet(
         planet["name"],
         color=PlanetColor[planet["id"]].value,
         posX=posX,
         posY=posY,
         radius=radius,
+        deltaAngle=deltaAngle,
+        distanceFromSun=distanceFromSun,
     )
 
 

@@ -1,6 +1,8 @@
 from enum import Enum
+from math import cos, pi, sin
+import numpy as np
 import pygame
-from colors import *
+from const import *
 
 
 class PlanetColor(Enum):
@@ -21,17 +23,19 @@ class Planet:
         name,
         color=WHITE,
         distanceFromSun=0,
-        speed=0,
         posX=0,
         posY=0,
+        angle=0,
+        deltaAngle=0,
         radius=10,
     ) -> None:
         self.name = name
         self.distanceFromSun = distanceFromSun
-        self.speed = speed
         self.color = color
         self.posX = posX
         self.posY = posY
+        self.angle = angle
+        self.deltaAngle = deltaAngle
         self.radius = radius
 
     @property
@@ -40,6 +44,11 @@ class Planet:
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, self.pos, self.radius)
+
+    def update(self, screen):
+        self.angle += self.deltaAngle
+        self.posX = screen.get_width() / 2 + self.distanceFromSun * cos(self.angle)
+        self.posY = screen.get_height() / 2 + self.distanceFromSun * sin(self.angle)
 
 
 class MyRect:
