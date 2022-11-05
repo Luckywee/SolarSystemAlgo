@@ -1,6 +1,5 @@
 from enum import Enum
-from math import cos, pi, sin
-import numpy as np
+from math import cos, sin
 import pygame
 from const import *
 
@@ -23,32 +22,46 @@ class Planet:
         name,
         color=WHITE,
         distanceFromSun=0,
+        realDistanceFromSun=0,
         posX=0,
         posY=0,
         angle=0,
         deltaAngle=0,
         radius=10,
+        selected=False,
     ) -> None:
         self.name = name
         self.distanceFromSun = distanceFromSun
+        self.realDistanceFromSun = realDistanceFromSun
         self.color = color
         self.posX = posX
         self.posY = posY
         self.angle = angle
         self.deltaAngle = deltaAngle
         self.radius = radius
+        self.selected = selected
 
     @property
     def pos(self):
         return (self.posX, self.posY)
 
     def draw(self, screen):
+        if self.selected:
+            pygame.draw.circle(screen, WHITE, self.pos, self.radius + 5)
         pygame.draw.circle(screen, self.color, self.pos, self.radius)
 
     def update(self, screen):
         self.angle += self.deltaAngle
         self.posX = screen.get_width() / 2 + self.distanceFromSun * cos(self.angle)
         self.posY = screen.get_height() / 2 + self.distanceFromSun * sin(self.angle)
+
+    def collidepoint(self, mousePos):
+        return pygame.Rect(
+            self.posX - self.radius,
+            self.posY - self.radius,
+            self.radius * 2,
+            self.radius * 2,
+        ).collidepoint(mousePos)
 
 
 class MyRect:
@@ -112,3 +125,67 @@ class Button:
     @property
     def getRect(self):
         return pygame.Rect(self.left, self.top, self.width, self.height)
+
+
+class Checkbox:
+    widthBox = 20
+
+    def __init__(
+        self,
+        left,
+        top,
+        label="",
+        color=WHITE,
+        checked=False,
+    ) -> None:
+        self.left = left
+        self.top = top
+        self.label = label
+        self.color = color
+        self.checked = checked
+
+    def init(self, font):
+        text = font.render(self.label, True, self.color)
+        self.widthTxt = text.get_rect().width
+        self.heightTxt = text.get_rect().height
+
+    def draw(self, screen, font):
+        pygame.draw.rect(
+            screen,
+            self.color,
+            self.getRectBox,
+            3,
+        )
+        if self.checked:
+            pygame.draw.rect(
+                screen,
+                self.color,
+                self.getRectBoxInside,
+            )
+
+        text = font.render(self.label, True, self.color)
+        screen.blit(text, (self.left + self.widthBox + 5, self.top))
+
+    @property
+    def getRect(self):
+        return pygame.Rect(
+            self.left, self.top, self.widthTxt + self.widthBox + 5, self.widthBox
+        )
+
+    @property
+    def getRectBox(self):
+        return pygame.Rect(
+            self.left,
+            self.top + self.heightTxt / 2 - self.widthBox / 2,
+            self.widthBox,
+            self.widthBox,
+        )
+
+    @property
+    def getRectBoxInside(self):
+        return pygame.Rect(
+            self.left + 5,
+            self.top + 5 + self.heightTxt / 2 - self.widthBox / 2,
+            self.widthBox - 10,
+            self.widthBox - 10,
+        )

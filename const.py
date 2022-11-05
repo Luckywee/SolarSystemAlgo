@@ -1,3 +1,5 @@
+from math import pi
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
@@ -10,4 +12,4 @@ CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 GRAY = (128, 128, 128)
 
-FPS = 100
+FPS = 60

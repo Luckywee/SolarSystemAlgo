@@ -1,14 +1,14 @@
+import math
 from typing import List
 import pygame
 from utili import *
-from models import MyRect
 
 
-def selectGame(nbButton: int, screen, clock, allPlanetsJSON):
+def selectGame(nbButton: int, screen, clock, allPlanetsJSON, fonts):
     if nbButton == 0:
-        telescopeGame(screen, clock, allPlanetsJSON)
+        telescopeGame(screen, fonts, clock, allPlanetsJSON)
     elif nbButton == 1:
-        planetMapsGame(screen, clock)
+        planetMapsGame(screen, fonts, clock, allPlanetsJSON)
     elif nbButton == 2:
         gravityJumpGame(screen, clock)
     else:
@@ -44,6 +44,7 @@ def backgroundTransition(screen, clock, firstImageRects):
     affichage = True
     while affichage:
         for event in pygame.event.get():
+            exitButtonEvent(event, screen)
             if event.type == pygame.QUIT:
                 affichage = False
                 pygame.quit()
@@ -61,11 +62,12 @@ def backgroundTransition(screen, clock, firstImageRects):
                 break
             firstImageRects[i - 1].draw(screen)
 
+        drawExitButton(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
 
-def mainMenu(screen: pygame.Surface, clock, font, w, h, allPlanetsJSON):
+def mainMenu(screen: pygame.Surface, clock, fonts, w, h, allPlanetsJSON):
     affichage = True
     widthTxtRect = w / 4
     heightTxtRect = h / 10
@@ -95,9 +97,10 @@ def mainMenu(screen: pygame.Surface, clock, font, w, h, allPlanetsJSON):
     )
     buttons.append(button3)
     for button in buttons:
-        button.draw(screen, font)
+        button.draw(screen, fonts["M"])
     while affichage:
         for event in pygame.event.get():
+            exitButtonEvent(event, screen)
             if event.type == pygame.QUIT:
                 affichage = False
                 pygame.quit()
@@ -111,32 +114,81 @@ def mainMenu(screen: pygame.Surface, clock, font, w, h, allPlanetsJSON):
                 mousePos = pygame.mouse.get_pos()
                 for button in buttons:
                     if button.getRect.collidepoint(mousePos) and not button.selected:
-                        button.draw(screen, font, True)
+                        button.draw(screen, fonts["M"], True)
                         button.selected = True
                     elif not button.getRect.collidepoint(mousePos) and button.selected:
-                        button.draw(screen, font, False)
+                        button.draw(screen, fonts["M"], False)
                         button.selected = False
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mousePos = pygame.mouse.get_pos()
                 for i_button in range(len(buttons)):
                     if buttons[i_button].getRect.collidepoint(mousePos):
-                        selectGame(i_button, screen, clock, allPlanetsJSON)
+                        selectGame(i_button, screen, clock, allPlanetsJSON, fonts)
 
+        drawExitButton(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
 
-def telescopeGame(screen: pygame.Surface, clock, allPlanetsJSON: List[Planet]):
+def telescopeGame(
+    screen: pygame.Surface,
+    fonts,
+    clock: pygame.time.Clock,
+    allPlanetsJSON: List[Planet],
+):
     allPlanets = filterFormatAllBodies(
         allPlanetsJSON,
         screen.get_width(),
         screen.get_height(),
     )
     speedMultiplier = 1
+    scaledPos = False
+    scaledRadius = False
+    cb_pos = Checkbox(0, 0, "Position to scale")
+    cb_pos.init(fonts["S"])
+    cb_rad = Checkbox(0, cb_pos.getRect.height + 10, "Radius to scale")
+    cb_rad.init(fonts["S"])
+    totalSecs = 0
     affichage = True
     while affichage:
         screen.fill(BLACK)
+        updatePlanets = False
+        # Setup for texts
+        totalSecs += 1 / FPS * speedMultiplier
+        textElapsedTime = fonts["S"].render(
+            "Elapsed time: " + getTextTime(totalSecs), True, WHITE
+        )
+        timeScale = (
+            "Time scale: "
+            + "1:"
+            + str(speedMultiplier)
+            + " (1s = "
+            + getTextTime(speedMultiplier)
+            + ")"
+        )
+        textTimeScale = fonts["S"].render(timeScale, True, WHITE)
+        # Rectangle hitbox for the speed multiplier
+        speedDividerRect = pygame.Rect(
+            10,
+            screen.get_height() - textTimeScale.get_rect().height - 20,
+            30,
+            20,
+        )
+        speedMultiplierRect = pygame.Rect(
+            90,
+            screen.get_height() - textTimeScale.get_rect().height - 20,
+            30,
+            20,
+        )
+        speedStopRect = pygame.Rect(
+            50,
+            screen.get_height() - textTimeScale.get_rect().height - 20,
+            30,
+            20,
+        )
         for event in pygame.event.get():
+            exitButtonEvent(event, screen)
+
             if event.type == pygame.QUIT:
                 affichage = False
                 pygame.quit()
@@ -146,31 +198,248 @@ def telescopeGame(screen: pygame.Surface, clock, allPlanetsJSON: List[Planet]):
                     affichage = False
                     pygame.quit()
                     exit()
-                if event.key == pygame.K_UP:
-                    speedMultiplier *= 10
-                    allPlanets = filterFormatAllBodies(
-                        allPlanetsJSON,
-                        screen.get_width(),
-                        screen.get_height(),
-                        speedMultiplier=speedMultiplier,
-                    )
-                if event.key == pygame.K_DOWN:
-                    speedMultiplier /= 10
-                    allPlanets = filterFormatAllBodies(
-                        allPlanetsJSON,
-                        screen.get_width(),
-                        screen.get_height(),
-                        speedMultiplier=speedMultiplier,
-                    )
+                if event.key == pygame.K_SPACE:
+                    speedMultiplier = 0
+                    updatePlanets = True
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mousePos = pygame.mouse.get_pos()
+                if cb_pos.getRect.collidepoint(mousePos):
+                    cb_pos.checked = not cb_pos.checked
+                    scaledPos = not scaledPos
+                    updatePlanets = True
+
+                elif cb_rad.getRect.collidepoint(mousePos):
+                    cb_rad.checked = not cb_rad.checked
+                    scaledRadius = not scaledRadius
+                    updatePlanets = True
+
+                elif speedDividerRect.collidepoint(mousePos):
+                    if speedMultiplier > 1:
+                        speedMultiplier = int(speedMultiplier / 10)
+                        updatePlanets = True
+
+                elif speedMultiplierRect.collidepoint(mousePos):
+                    if speedMultiplier == 0:
+                        speedMultiplier = 1
+                    elif speedMultiplier < 10**12:
+                        speedMultiplier = int(speedMultiplier * 10)
+                        updatePlanets = True
+
+                elif speedStopRect.collidepoint(mousePos):
+                    speedMultiplier = 0
+                    updatePlanets = True
+
+        if updatePlanets:
+            allPlanets = filterFormatAllBodies(
+                allPlanetsJSON,
+                screen.get_width(),
+                screen.get_height(),
+                speedMultiplier=speedMultiplier,
+                scaledPos=scaledPos,
+                scaledRadius=scaledRadius,
+                oldPlanets=allPlanets,
+            )
+
         for planet in allPlanets:
-            planet.draw(screen)
             planet.update(screen)
+            planet.draw(screen)
+
+        mousePos = pygame.mouse.get_pos()
+        printPlanetName(screen, mousePos, allPlanets, fonts["M"])
+
+        cb_pos.draw(screen, fonts["S"])
+        cb_rad.draw(screen, fonts["S"])
+
+        screen.blit(
+            textElapsedTime,
+            (
+                screen.get_width() - textElapsedTime.get_rect().width,
+                screen.get_height() - textElapsedTime.get_rect().height,
+            ),
+        )
+        screen.blit(
+            textTimeScale,
+            (
+                0,
+                screen.get_height() - textTimeScale.get_rect().height,
+            ),
+        )
+
+        # Draw arrows for time scale
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (30, screen.get_height() - textTimeScale.get_rect().height),
+                (30, screen.get_height() - textTimeScale.get_rect().height - 20),
+                (10, screen.get_height() - textTimeScale.get_rect().height - 10),
+            ),
+        )
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (40, screen.get_height() - textTimeScale.get_rect().height),
+                (40, screen.get_height() - textTimeScale.get_rect().height - 20),
+                (20, screen.get_height() - textTimeScale.get_rect().height - 10),
+            ),
+        )
+
+        pygame.draw.rect(
+            screen,
+            WHITE,
+            (
+                55,
+                screen.get_height() - textTimeScale.get_rect().height - 20,
+                20,
+                20,
+            ),
+        )
+
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (90, screen.get_height() - textTimeScale.get_rect().height),
+                (90, screen.get_height() - textTimeScale.get_rect().height - 20),
+                (110, screen.get_height() - textTimeScale.get_rect().height - 10),
+            ),
+        )
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (100, screen.get_height() - textTimeScale.get_rect().height),
+                (100, screen.get_height() - textTimeScale.get_rect().height - 20),
+                (120, screen.get_height() - textTimeScale.get_rect().height - 10),
+            ),
+        )
+        drawExitButton(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
 
-def planetMapsGame(screen, clock):
-    pass
+def planetMapsGame(
+    screen: pygame.Surface,
+    fonts,
+    clock: pygame.time.Clock,
+    allPlanetsJSON: List[Planet],
+):
+    allPlanets = filterFormatAllBodies(
+        allPlanetsJSON, screen.get_width(), screen.get_height(), fullLength=True
+    )
+    affichage = True
+    planetsSelected = []
+    while affichage:
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            exitButtonEvent(event, screen)
+            if event.type == pygame.QUIT:
+                affichage = False
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    affichage = False
+                    pygame.quit()
+                    exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mousePos = pygame.mouse.get_pos()
+                for planet in allPlanets:
+                    if planet.collidepoint(mousePos):
+                        if planet.selected:
+                            planetsSelected.remove(planet)
+                            planet.selected = not planet.selected
+                        else:
+                            if len(planetsSelected) < 2:
+                                planetsSelected.append(planet)
+                                planet.selected = not planet.selected
+
+        for planet in allPlanets:
+            planet.draw(screen)
+
+        if len(planetsSelected) == 2:
+            distance = abs(
+                planetsSelected[0].realDistanceFromSun
+                - planetsSelected[1].realDistanceFromSun
+            )
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (screen.get_width() / 2 - 5, screen.get_height() - 50),
+                    (screen.get_width() / 2 - 5, screen.get_height() - 10),
+                    (screen.get_width() / 2 + 25, screen.get_height() - 30),
+                ),
+            )
+            pygame.draw.rect(
+                screen,
+                WHITE,
+                (screen.get_width() / 2 - 25, screen.get_height() - 35, 20, 10),
+            )
+            kmsByFoot = 4 / 60 / 60
+            kmsByCar = 100 / 60 / 60
+            kmsByRocket = 30000 / 60 / 60
+            kmsByLight = 1080000000 / 60 / 60
+            textKmhByFoot = fonts["S"].render(
+                getTextTime(distance / kmsByFoot) + " by foot", True, WHITE
+            )
+            textKmhByCar = fonts["S"].render(
+                getTextTime(distance / kmsByCar) + " by car", True, WHITE
+            )
+            textKmhByRocket = fonts["S"].render(
+                getTextTime(distance / kmsByRocket) + " by rocket", True, WHITE
+            )
+            textKmhByLight = fonts["S"].render(
+                getTextTime(distance / kmsByLight) + " in light speed", True, WHITE
+            )
+            textPlanet1 = fonts["M"].render(planetsSelected[0].name, True, WHITE)
+            textPlanet2 = fonts["M"].render(planetsSelected[1].name, True, WHITE)
+            screen.blit(
+                textPlanet1, (10, screen.get_height() - textPlanet1.get_rect().height)
+            )
+            screen.blit(
+                textPlanet2,
+                (
+                    screen.get_width() - textPlanet2.get_rect().width,
+                    screen.get_height() - textPlanet2.get_rect().height - 10,
+                ),
+            )
+            screen.blit(
+                textKmhByFoot,
+                (
+                    (screen.get_width() / 4) * 0,
+                    10,
+                ),
+            )
+            screen.blit(
+                textKmhByCar,
+                (
+                    (screen.get_width() / 4) * 1,
+                    10,
+                ),
+            )
+            screen.blit(
+                textKmhByRocket,
+                (
+                    (screen.get_width() / 4) * 2,
+                    10,
+                ),
+            )
+            screen.blit(
+                textKmhByLight,
+                (
+                    (screen.get_width() / 4) * 3,
+                    10,
+                ),
+            )
+
+        mousePos = pygame.mouse.get_pos()
+        printPlanetName(screen, mousePos, allPlanets, fonts["M"])
+
+        drawExitButton(screen)
+        clock.tick(FPS)
+        pygame.display.flip()
 
 
 def gravityJumpGame(screen, clock):

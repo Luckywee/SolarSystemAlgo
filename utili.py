@@ -1,22 +1,55 @@
-from math import pi
 import numpy as np
 from PIL import Image
 from models import *
 
 
-def nbToPowerTenStr(nb):
+def nbToPowerTenStr(nb: int, digits=2):
+    if nb < 0:
+        return "-" + nbToPowerTenStr(-nb, digits)
+    if len(str(nb)) <= digits + 1:
+        return str(nb)
     nb = str(nb)
     result = ""
     result += nb[:1]
-    result += "."
-    result += nb[1:3]
-    result += "e"
-    result += str(len(nb[3:]))
+    if nb[1 : digits + 1] != "0" * (digits):
+        result += "." + nb[1 : digits + 1]
+    result += "e" + str(len(nb) - 1) if len(nb) > 1 else ""
     return result
 
 
 def crossMultiplication(nb1, nb2, nb3):
     return nb3 * nb2 / nb1
+
+
+def exitButtonEvent(event, screen):
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mousePos = pygame.mouse.get_pos()
+        if mousePos[0] > screen.get_width() - 30 and mousePos[1] < 30:
+            pygame.quit()
+            exit()
+
+
+def drawExitButton(screen):
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() - 30, 0),
+            (screen.get_width() - 30, 5),
+            (screen.get_width(), 30),
+            (screen.get_width(), 30 - 5),
+        ),
+    )
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() - 30, 30),
+            (screen.get_width() - 30, 30 - 5),
+            (screen.get_width(), 0),
+            (screen.get_width(), 0 + 5),
+        ),
+    )
 
 
 def filterFormatAllBodies(
@@ -28,6 +61,8 @@ def filterFormatAllBodies(
     speedMultiplier=1,
     scaledPos=False,
     scaledRadius=False,
+    oldPlanets=[],
+    fullLength=False,
 ):
     bodiesJson = []
     for planet in allBodiesJson:
@@ -43,6 +78,7 @@ def filterFormatAllBodies(
     bodiesJson.sort(key=lambda x: (x["perihelion"] + x["aphelion"]), reverse=False)
     allBodies = []
     for i_planet in range(len(bodiesJson)):
+        oldPlanet = oldPlanets[i_planet] if len(oldPlanets) > 0 else None
         allBodies.append(
             formatPlanet(
                 bodiesJson[i_planet],
@@ -55,6 +91,8 @@ def filterFormatAllBodies(
                 speedMultiplier,
                 scaledPos,
                 scaledRadius,
+                oldPlanet=oldPlanet,
+                fullLength=fullLength,
             )
         )
 
@@ -72,23 +110,31 @@ def formatPlanet(
     speedMultiplier,
     scaledPos,
     scaledRadius,
+    oldPlanet=None,
+    fullLength=False,
 ):
-    distanceFromSun = (planet["perihelion"] + planet["aphelion"]) / 2
+    realDistanceFromSun = (planet["perihelion"] + planet["aphelion"]) / 2
     secToRotate = planet["sideralOrbit"] * 24 * 60 * 60
     deltaAngleReal = (2 * pi / (secToRotate * FPS)) if secToRotate != 0 else 0
     deltaAngle = deltaAngleReal * speedMultiplier
-    print(planet["name"], PlanetColor[planet["id"]].value)
     if scaledRadius:
         radius = crossMultiplication(biggest, 50, planet["meanRadius"])
     else:
         radius = 15
 
-    if scaledPos:
-        posX = crossMultiplication(furthest, w / 2 * 0.95, distanceFromSun) + w / 2
+    if fullLength:
+        posX = i_planet * (w / nbTotal) + (w / nbTotal) / 2
         posY = h / 2
+        radius = 25
     else:
-        posX = i_planet * (w / 2 / nbTotal) + w / 2
-        posY = h / 2
+        if scaledPos:
+            posX = crossMultiplication(furthest, w / 2 * 0.95, realDistanceFromSun) + w / 2
+            posY = h / 2
+        else:
+            posX = i_planet * (w / 2 / nbTotal) + w / 2
+            posY = h / 2
+
+    angle = oldPlanet.angle if oldPlanet else 0
     distanceFromSun = posX - w / 2
     posY = h / 2
     return Planet(
@@ -99,6 +145,8 @@ def formatPlanet(
         radius=radius,
         deltaAngle=deltaAngle,
         distanceFromSun=distanceFromSun,
+        realDistanceFromSun=realDistanceFromSun,
+        angle=angle,
     )
 
 
@@ -159,3 +207,33 @@ def getRectArrayFromImage(img_name, screenWidth, screenHeight, ratioPixel=10):
             )
 
     return allRects
+
+
+def getTextTime(secs):
+    secs = int(secs)
+    txt = ""
+    y = int(secs / (3600 * 24 * 365))
+    txt += str(y) + "y" if y > 0 else ""
+    d = int((secs - (y * (3600 * 24 * 365))) / (3600 * 24))
+    txt += " " + str(d) + "d" if d > 0 else ""
+    if y == 0:
+        h = int((secs - (d * 3600 * 24) - (y * 3600 * 24 * 365)) / 3600)
+        txt += " " + str(h) + "h" if h > 0 else ""
+    if y == 0 and d == 0:
+        m = int((secs - (d * 3600 * 24) - (y * 3600 * 24 * 365) - (h * 3600)) / 60)
+        txt += " " + str(m) + "m" if m > 0 else ""
+    if y == 0 and d == 0 and h == 0:
+        s = int(secs - (d * 3600 * 24) - (y * 3600 * 24 * 365) - (h * 3600) - (m * 60))
+        txt += " " + str(s) + "s"
+    return txt
+
+
+def printPlanetName(screen, mousePos, allPlanets, font):
+    for planet in allPlanets:
+        if planet.collidepoint(mousePos):
+            textPlanetHover = font.render(planet.name, True, WHITE)
+            screen.blit(
+                textPlanetHover,
+                (screen.get_width() / 2 - textPlanetHover.get_rect().width / 2, 10),
+            )
+            break
