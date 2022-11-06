@@ -4,13 +4,13 @@ import pygame
 from utili import *
 
 
-def selectGame(nbButton: int, screen, clock, allPlanetsJSON, fonts):
+def selectGame(nbButton: int, screen, clock, allPlanetsJSON, fonts, firstImageRects):
     if nbButton == 0:
-        telescopeGame(screen, fonts, clock, allPlanetsJSON)
+        telescopeGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
     elif nbButton == 1:
-        planetMapsGame(screen, fonts, clock, allPlanetsJSON)
+        planetMapsGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
     elif nbButton == 2:
-        gravityJumpGame(screen, clock)
+        gravityJumpGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
     else:
         print("Error")
         return
@@ -67,8 +67,12 @@ def backgroundTransition(screen, clock, firstImageRects):
         pygame.display.flip()
 
 
-def mainMenu(screen: pygame.Surface, clock, fonts, w, h, allPlanetsJSON):
-    affichage = True
+def mainMenu(
+    screen: pygame.Surface, clock, fonts, w, h, allPlanetsJSON, firstImageRects=[]
+):
+    screen.fill(BLACK)
+    for rect in firstImageRects:
+        rect.draw(screen)
     widthTxtRect = w / 4
     heightTxtRect = h / 10
     buttons: List[Button] = []
@@ -98,6 +102,8 @@ def mainMenu(screen: pygame.Surface, clock, fonts, w, h, allPlanetsJSON):
     buttons.append(button3)
     for button in buttons:
         button.draw(screen, fonts["M"])
+
+    affichage = True
     while affichage:
         for event in pygame.event.get():
             exitButtonEvent(event, screen)
@@ -123,7 +129,14 @@ def mainMenu(screen: pygame.Surface, clock, fonts, w, h, allPlanetsJSON):
                 mousePos = pygame.mouse.get_pos()
                 for i_button in range(len(buttons)):
                     if buttons[i_button].getRect.collidepoint(mousePos):
-                        selectGame(i_button, screen, clock, allPlanetsJSON, fonts)
+                        selectGame(
+                            i_button,
+                            screen,
+                            clock,
+                            allPlanetsJSON,
+                            fonts,
+                            firstImageRects,
+                        )
 
         drawExitButton(screen)
         clock.tick(FPS)
@@ -135,6 +148,7 @@ def telescopeGame(
     fonts,
     clock: pygame.time.Clock,
     allPlanetsJSON: List[Planet],
+    firstImageRects,
 ):
     allPlanets = filterFormatAllBodies(
         allPlanetsJSON,
@@ -188,7 +202,16 @@ def telescopeGame(
         )
         for event in pygame.event.get():
             exitButtonEvent(event, screen)
-
+            if backButtonEvent(event, screen):
+                mainMenu(
+                    screen,
+                    clock,
+                    fonts,
+                    screen.get_width(),
+                    screen.get_height(),
+                    allPlanetsJSON,
+                    firstImageRects,
+                )
             if event.type == pygame.QUIT:
                 affichage = False
                 pygame.quit()
@@ -315,6 +338,7 @@ def telescopeGame(
             ),
         )
         drawExitButton(screen)
+        drawBackButton(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
@@ -324,6 +348,7 @@ def planetMapsGame(
     fonts,
     clock: pygame.time.Clock,
     allPlanetsJSON: List[Planet],
+    firstImageRects,
 ):
     allPlanets = filterFormatAllBodies(
         allPlanetsJSON, screen.get_width(), screen.get_height(), fullLength=True
@@ -334,6 +359,16 @@ def planetMapsGame(
         screen.fill(BLACK)
         for event in pygame.event.get():
             exitButtonEvent(event, screen)
+            if backButtonEvent(event, screen):
+                mainMenu(
+                    screen,
+                    clock,
+                    fonts,
+                    screen.get_width(),
+                    screen.get_height(),
+                    allPlanetsJSON,
+                    firstImageRects,
+                )
             if event.type == pygame.QUIT:
                 affichage = False
                 pygame.quit()
@@ -393,6 +428,9 @@ def planetMapsGame(
             textKmhByLight = fonts["S"].render(
                 getTextTime(distance / kmsByLight) + " in light speed", True, WHITE
             )
+            distanceFormated = formatNumber(round(distance))
+
+            textDistance = fonts["S"].render(distanceFormated + " km", True, WHITE)
             textPlanet1 = fonts["M"].render(planetsSelected[0].name, True, WHITE)
             textPlanet2 = fonts["M"].render(planetsSelected[1].name, True, WHITE)
             screen.blit(
@@ -403,6 +441,13 @@ def planetMapsGame(
                 (
                     screen.get_width() - textPlanet2.get_rect().width,
                     screen.get_height() - textPlanet2.get_rect().height - 10,
+                ),
+            )
+            screen.blit(
+                textDistance,
+                (
+                    screen.get_width() / 2 - textDistance.get_rect().width / 2,
+                    screen.get_height() - textDistance.get_rect().height - 60,
                 ),
             )
             screen.blit(
@@ -438,9 +483,120 @@ def planetMapsGame(
         printPlanetName(screen, mousePos, allPlanets, fonts["M"])
 
         drawExitButton(screen)
+        drawBackButton(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
 
-def gravityJumpGame(screen, clock):
-    pass
+def gravityJumpGame(
+    screen: pygame.Surface,
+    fonts,
+    clock: pygame.time.Clock,
+    allPlanetsJSON: List[Planet],
+    firstImageRects,
+):
+    allPlanets = filterFormatAllBodies(
+        allPlanetsJSON, screen.get_width(), screen.get_height(), fullLength=True
+    )
+    affichage = True
+    planetSelected = None
+    percentageDone = 0
+    while affichage:
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            exitButtonEvent(event, screen)
+            if backButtonEvent(event, screen):
+                if planetSelected != None:
+                    planetSelected = None
+                else:
+                    mainMenu(
+                        screen,
+                        clock,
+                        fonts,
+                        screen.get_width(),
+                        screen.get_height(),
+                        allPlanetsJSON,
+                        firstImageRects,
+                    )
+            if event.type == pygame.QUIT:
+                affichage = False
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    affichage = False
+                    pygame.quit()
+                    exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mousePos = pygame.mouse.get_pos()
+                for planet in allPlanets:
+                    if planet.collidepoint(mousePos) and planet.name != "Le Soleil":
+                        planetSelected = planet
+                if pygame.Rect(0, screen.get_height() / 2 - 50, 100, 100).collidepoint(
+                    mousePos
+                ):
+                    percentageDone = 1
+
+        if not planetSelected:
+            for planet in allPlanets:
+                planet.draw(screen)
+            mousePos = pygame.mouse.get_pos()
+            printPlanetName(screen, mousePos, allPlanets, fonts["M"])
+            percentageDone = 0
+        else:
+            pygame.draw.rect(
+                screen,
+                planetSelected.color,
+                (
+                    0,
+                    screen.get_height() - screen.get_height() / 5,
+                    screen.get_width(),
+                    screen.get_height() / 5,
+                ),
+            )
+            if percentageDone < 200 and percentageDone > 0:
+                percentageDone += 1
+
+            height = (
+                AVERAGE_HEIGHT_JUMP_M
+                * EARTH_GRAVITY
+                / planetSelected.gravity
+                * (
+                    (
+                        percentageDone
+                        if percentageDone < 100
+                        else 100 - (percentageDone - 100)
+                    )
+                    / 100
+                )
+            )
+            textGravity = fonts["M"].render(
+                str(
+                    round(
+                        height,
+                        2,
+                    )
+                )
+                + " m",
+                True,
+                WHITE,
+            )
+            drawLittleGuy(screen, height)
+            screen.blit(
+                textGravity,
+                (screen.get_width() / 2 - textGravity.get_rect().width / 2, 0),
+            )
+
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (30, screen.get_height() / 2 - 50),
+                    (30, screen.get_height() / 2 + 50),
+                    (100, screen.get_height() / 2),
+                ),
+            )
+        drawExitButton(screen)
+        drawBackButton(screen)
+        clock.tick(FPS)
+        pygame.display.flip()

@@ -28,4 +28,4 @@ firstImageRects = getRectArrayFromImage("front_page.jpg", w, h, 10)
 random.shuffle(firstImageRects)
 
 backgroundTransition(screen, clock, firstImageRects)
-mainMenu(screen, clock, fonts, w, h, response.json()["bodies"])
+mainMenu(screen, clock, fonts, w, h, response.json()["bodies"], firstImageRects)

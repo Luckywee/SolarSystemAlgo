@@ -17,6 +17,19 @@ def nbToPowerTenStr(nb: int, digits=2):
     return result
 
 
+def formatNumber(nb):
+    nb = str(nb)
+    if len(nb) <= 3:
+        return nb
+    newNb = []
+    for i in range(len(nb)):
+        j = len(nb) - i - 1
+        if i != 0 - i and (i) % 3 == 0:
+            newNb.insert(0, "'")
+        newNb.insert(0, nb[j])
+    return "".join(newNb)
+
+
 def crossMultiplication(nb1, nb2, nb3):
     return nb3 * nb2 / nb1
 
@@ -50,6 +63,32 @@ def drawExitButton(screen):
             (screen.get_width(), 0 + 5),
         ),
     )
+
+
+def drawBackButton(screen):
+    pygame.draw.circle(screen, WHITE, (screen.get_width() - 50, 20), 10)
+    pygame.draw.circle(screen, BLACK, (screen.get_width() - 50, 20), 6)
+    pygame.draw.rect(screen, BLACK, (screen.get_width() - 50 - 15, 0, 15, 30))
+    pygame.draw.rect(screen, WHITE, (screen.get_width() - 50 - 5, 10, 5, 4))
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() - 50 - 5, 0),
+            (screen.get_width() - 50 - 5, 20),
+            (screen.get_width() - 50 - 5 - 10, 10),
+        ),
+    )
+
+
+def backButtonEvent(event, screen):
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mousePos = pygame.mouse.get_pos()
+        return (
+            mousePos[0] < screen.get_width() - 30
+            and mousePos[0] > screen.get_width() - 50 - 5 - 10
+            and mousePos[1] < 30
+        )
 
 
 def filterFormatAllBodies(
@@ -128,7 +167,9 @@ def formatPlanet(
         radius = 25
     else:
         if scaledPos:
-            posX = crossMultiplication(furthest, w / 2 * 0.95, realDistanceFromSun) + w / 2
+            posX = (
+                crossMultiplication(furthest, w / 2 * 0.95, realDistanceFromSun) + w / 2
+            )
             posY = h / 2
         else:
             posX = i_planet * (w / 2 / nbTotal) + w / 2
@@ -147,6 +188,7 @@ def formatPlanet(
         distanceFromSun=distanceFromSun,
         realDistanceFromSun=realDistanceFromSun,
         angle=angle,
+        gravity=planet["gravity"],
     )
 
 
@@ -213,7 +255,7 @@ def getTextTime(secs):
     secs = int(secs)
     txt = ""
     y = int(secs / (3600 * 24 * 365))
-    txt += str(y) + "y" if y > 0 else ""
+    txt += formatNumber(y) + "y" if y > 0 else ""
     d = int((secs - (y * (3600 * 24 * 365))) / (3600 * 24))
     txt += " " + str(d) + "d" if d > 0 else ""
     if y == 0:
@@ -237,3 +279,58 @@ def printPlanetName(screen, mousePos, allPlanets, font):
                 (screen.get_width() / 2 - textPlanetHover.get_rect().width / 2, 10),
             )
             break
+
+
+def drawLittleGuy(screen, height):
+    heightPx = screen.get_height() - 200 - (screen.get_height() / 1.5 * height)
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() / 2 - 30, heightPx),
+            (screen.get_width() / 2 - 5, heightPx - 50),
+            (screen.get_width() / 2 + 5, heightPx - 50),
+            (screen.get_width() / 2 - 20, heightPx),
+        ),
+    )
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() / 2 + 30, heightPx),
+            (screen.get_width() / 2 + 5, heightPx - 50),
+            (screen.get_width() / 2 - 5, heightPx - 50),
+            (screen.get_width() / 2 + 20, heightPx),
+        ),
+    )
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() / 2 - 5, heightPx - 50),
+            (screen.get_width() / 2 - 5, heightPx - 100),
+            (screen.get_width() / 2 + 5, heightPx - 100),
+            (screen.get_width() / 2 + 5, heightPx - 50),
+        ),
+    )
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() / 2 - 30, heightPx - 60),
+            (screen.get_width() / 2 - 5, heightPx - 100),
+            (screen.get_width() / 2 + 5, heightPx - 100),
+            (screen.get_width() / 2 - 20, heightPx - 60),
+        ),
+    )
+    pygame.draw.polygon(
+        screen,
+        WHITE,
+        (
+            (screen.get_width() / 2 + 30, heightPx - 60),
+            (screen.get_width() / 2 + 5, heightPx - 100),
+            (screen.get_width() / 2 - 5, heightPx - 100),
+            (screen.get_width() / 2 + 20, heightPx - 60),
+        ),
+    )
+    pygame.draw.circle(screen, WHITE, (screen.get_width() / 2, heightPx - 115), 15)

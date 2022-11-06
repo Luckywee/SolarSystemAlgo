@@ -28,6 +28,7 @@ class Planet:
         angle=0,
         deltaAngle=0,
         radius=10,
+        gravity=0,
         selected=False,
     ) -> None:
         self.name = name
@@ -39,6 +40,7 @@ class Planet:
         self.angle = angle
         self.deltaAngle = deltaAngle
         self.radius = radius
+        self.gravity = gravity
         self.selected = selected
 
     @property
