@@ -221,12 +221,12 @@ class LittleGuy:
         self.realHeightMax = AVERAGE_HEIGHT_JUMP_M * EARTH_GRAVITY / gravity
         self.heightMax = self.realHeightMax * screen.get_height() / 1.5
         self.left = screen.get_width() / 2 - 30
-        self.bot = screen.get_height() - 200
+        self.bot = screen.get_height() - screen.get_height() / 5
         self.step = 0
 
     def update(self, percentageToAdd=1):
         self.winPoseFrames += 1
-        if self.winPoseFrames % FPS==0:
+        if self.winPoseFrames % FPS == 0:
             self.winPoseUp = not self.winPoseUp
         if self.step != 2:
             if self.step == 0:
