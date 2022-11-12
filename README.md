@@ -5,9 +5,9 @@
 1. Install python on your PC
 2. Install libraries with pip :
    1. `pip install requests`
-   2. If you have python version under 3.11 (`py -V` to check the version), do 2-a, if you have 3.11, do 2-b.
-      2-a) `pip install pygame`
-      2-b) `pip install pygame --pre`
+   2. If you have python version under 3.11 (`py -V` to check the version), do the ***a*** step, if you have 3.11, do the ***b*** step.
+      1. `pip install pygame`
+      2. `pip install pygame --pre`
    3. `pip install numpy`
    4. `pip install pillow`
 3. Install the git project
