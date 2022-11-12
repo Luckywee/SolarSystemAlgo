@@ -11,9 +11,6 @@ def selectGame(nbButton: int, screen, clock, allPlanetsJSON, fonts, firstImageRe
         planetMapsGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
     elif nbButton == 2:
         gravityJumpGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
-    else:
-        print("Error")
-        return
 
 
 def loadingScreen(screen, clock, font: pygame.font.Font):
@@ -500,7 +497,7 @@ def gravityJumpGame(
     )
     affichage = True
     planetSelected = None
-    percentageDone = 0
+    littleGuy = None
     while affichage:
         screen.fill(BLACK)
         for event in pygame.event.get():
@@ -535,15 +532,18 @@ def gravityJumpGame(
                 if pygame.Rect(0, screen.get_height() / 2 - 50, 100, 100).collidepoint(
                     mousePos
                 ):
-                    percentageDone = 1
+                    littleGuy = None
 
         if not planetSelected:
             for planet in allPlanets:
                 planet.draw(screen)
             mousePos = pygame.mouse.get_pos()
             printPlanetName(screen, mousePos, allPlanets, fonts["M"])
-            percentageDone = 0
+            littleGuy = None
         else:
+            if littleGuy == None:
+                littleGuy = LittleGuy()
+                littleGuy.initLittleGuy(screen, planetSelected.gravity)
             pygame.draw.rect(
                 screen,
                 planetSelected.color,
@@ -554,26 +554,13 @@ def gravityJumpGame(
                     screen.get_height() / 5,
                 ),
             )
-            if percentageDone < 200 and percentageDone > 0:
-                percentageDone += 1
 
-            height = (
-                AVERAGE_HEIGHT_JUMP_M
-                * EARTH_GRAVITY
-                / planetSelected.gravity
-                * (
-                    (
-                        percentageDone
-                        if percentageDone < 100
-                        else 100 - (percentageDone - 100)
-                    )
-                    / 100
-                )
-            )
+            littleGuy.update(50 / FPS)
+            littleGuy.draw(screen)
             textGravity = fonts["M"].render(
                 str(
                     round(
-                        height,
+                        littleGuy.getHeight,
                         2,
                     )
                 )
@@ -581,10 +568,29 @@ def gravityJumpGame(
                 True,
                 WHITE,
             )
-            drawLittleGuy(screen, height)
             screen.blit(
                 textGravity,
                 (screen.get_width() / 2 - textGravity.get_rect().width / 2, 0),
+            )
+
+            textMaxHeight = fonts["S"].render(
+                "Max height: "
+                + str(
+                    round(
+                        littleGuy.realHeightMax,
+                        2,
+                    )
+                )
+                + " m",
+                True,
+                WHITE,
+            )
+            screen.blit(
+                textMaxHeight,
+                (
+                    screen.get_width() - textMaxHeight.get_rect().width,
+                    screen.get_height() / 2 - textMaxHeight.get_rect().height / 2,
+                ),
             )
 
             pygame.draw.polygon(

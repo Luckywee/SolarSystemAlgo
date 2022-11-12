@@ -3,20 +3,6 @@ from PIL import Image
 from models import *
 
 
-def nbToPowerTenStr(nb: int, digits=2):
-    if nb < 0:
-        return "-" + nbToPowerTenStr(-nb, digits)
-    if len(str(nb)) <= digits + 1:
-        return str(nb)
-    nb = str(nb)
-    result = ""
-    result += nb[:1]
-    if nb[1 : digits + 1] != "0" * (digits):
-        result += "." + nb[1 : digits + 1]
-    result += "e" + str(len(nb) - 1) if len(nb) > 1 else ""
-    return result
-
-
 def formatNumber(nb):
     nb = str(nb)
     if len(nb) <= 3:
@@ -65,6 +51,16 @@ def drawExitButton(screen):
     )
 
 
+def backButtonEvent(event, screen):
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        mousePos = pygame.mouse.get_pos()
+        return (
+            mousePos[0] < screen.get_width() - 30
+            and mousePos[0] > screen.get_width() - 50 - 5 - 10
+            and mousePos[1] < 30
+        )
+
+
 def drawBackButton(screen):
     pygame.draw.circle(screen, WHITE, (screen.get_width() - 50, 20), 10)
     pygame.draw.circle(screen, BLACK, (screen.get_width() - 50, 20), 6)
@@ -79,16 +75,6 @@ def drawBackButton(screen):
             (screen.get_width() - 50 - 5 - 10, 10),
         ),
     )
-
-
-def backButtonEvent(event, screen):
-    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-        mousePos = pygame.mouse.get_pos()
-        return (
-            mousePos[0] < screen.get_width() - 30
-            and mousePos[0] > screen.get_width() - 50 - 5 - 10
-            and mousePos[1] < 30
-        )
 
 
 def filterFormatAllBodies(
@@ -279,58 +265,3 @@ def printPlanetName(screen, mousePos, allPlanets, font):
                 (screen.get_width() / 2 - textPlanetHover.get_rect().width / 2, 10),
             )
             break
-
-
-def drawLittleGuy(screen, height):
-    heightPx = screen.get_height() - 200 - (screen.get_height() / 1.5 * height)
-    pygame.draw.polygon(
-        screen,
-        WHITE,
-        (
-            (screen.get_width() / 2 - 30, heightPx),
-            (screen.get_width() / 2 - 5, heightPx - 50),
-            (screen.get_width() / 2 + 5, heightPx - 50),
-            (screen.get_width() / 2 - 20, heightPx),
-        ),
-    )
-    pygame.draw.polygon(
-        screen,
-        WHITE,
-        (
-            (screen.get_width() / 2 + 30, heightPx),
-            (screen.get_width() / 2 + 5, heightPx - 50),
-            (screen.get_width() / 2 - 5, heightPx - 50),
-            (screen.get_width() / 2 + 20, heightPx),
-        ),
-    )
-    pygame.draw.polygon(
-        screen,
-        WHITE,
-        (
-            (screen.get_width() / 2 - 5, heightPx - 50),
-            (screen.get_width() / 2 - 5, heightPx - 100),
-            (screen.get_width() / 2 + 5, heightPx - 100),
-            (screen.get_width() / 2 + 5, heightPx - 50),
-        ),
-    )
-    pygame.draw.polygon(
-        screen,
-        WHITE,
-        (
-            (screen.get_width() / 2 - 30, heightPx - 60),
-            (screen.get_width() / 2 - 5, heightPx - 100),
-            (screen.get_width() / 2 + 5, heightPx - 100),
-            (screen.get_width() / 2 - 20, heightPx - 60),
-        ),
-    )
-    pygame.draw.polygon(
-        screen,
-        WHITE,
-        (
-            (screen.get_width() / 2 + 30, heightPx - 60),
-            (screen.get_width() / 2 + 5, heightPx - 100),
-            (screen.get_width() / 2 - 5, heightPx - 100),
-            (screen.get_width() / 2 + 20, heightPx - 60),
-        ),
-    )
-    pygame.draw.circle(screen, WHITE, (screen.get_width() / 2, heightPx - 115), 15)

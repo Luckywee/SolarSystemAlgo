@@ -191,3 +191,128 @@ class Checkbox:
             self.widthBox - 10,
             self.widthBox - 10,
         )
+
+
+class LittleGuy:
+    winPoseFrames = 0
+    winPoseUp = False
+
+    def __init__(
+        self,
+        left=None,
+        bot=None,
+        heightMax=None,
+        realHeightMax=None,
+        percentageDone=0,
+        step=0,
+    ) -> None:
+        self.left = left
+        self.bot = bot
+        self.realHeightMax = realHeightMax
+        self.heightMax = heightMax
+        self.percentageDone = percentageDone
+        self.step = step  # 0 -> up; 1 -> down; 2 -> finished;
+
+    @property
+    def getHeight(self):
+        return self.realHeightMax * self.percentageDone / 100
+
+    def initLittleGuy(self, screen, gravity):
+        self.realHeightMax = AVERAGE_HEIGHT_JUMP_M * EARTH_GRAVITY / gravity
+        self.heightMax = self.realHeightMax * screen.get_height() / 1.5
+        self.left = screen.get_width() / 2 - 30
+        self.bot = screen.get_height() - 200
+        self.step = 0
+
+    def update(self, percentageToAdd=1):
+        self.winPoseFrames += 1
+        if self.winPoseFrames % FPS==0:
+            self.winPoseUp = not self.winPoseUp
+        if self.step != 2:
+            if self.step == 0:
+                self.percentageDone += percentageToAdd
+                self.bot = self.bot - self.heightMax * percentageToAdd / 100
+                if self.percentageDone >= 100:
+                    self.percentageDone = 100
+                    self.step = 1
+            else:
+                self.percentageDone -= percentageToAdd
+                self.bot = self.bot + self.heightMax * percentageToAdd / 100
+                if self.percentageDone <= 0:
+                    self.percentageDone = 0
+                    self.step = 2
+
+    def draw(self, screen):
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (self.left, self.bot),
+                (self.left + 25, self.bot - 50),
+                (self.left + 35, self.bot - 50),
+                (self.left + 10, self.bot),
+            ),
+        )
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (self.left + 60, self.bot),
+                (self.left + 35, self.bot - 50),
+                (self.left + 25, self.bot - 50),
+                (self.left + 50, self.bot),
+            ),
+        )
+        pygame.draw.polygon(
+            screen,
+            WHITE,
+            (
+                (self.left + 25, self.bot - 50),
+                (self.left + 25, self.bot - 100),
+                (self.left + 35, self.bot - 100),
+                (self.left + 35, self.bot - 50),
+            ),
+        )
+        if self.step == 2 and self.winPoseUp:
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (self.left, self.bot - 120),
+                    (self.left + 25, self.bot - 80),
+                    (self.left + 35, self.bot - 80),
+                    (self.left + 10, self.bot - 120),
+                ),
+            )
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (self.left + 60, self.bot - 120),
+                    (self.left + 35, self.bot - 80),
+                    (self.left + 25, self.bot - 80),
+                    (self.left + 50, self.bot - 120),
+                ),
+            )
+        else:
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (self.left, self.bot - 60),
+                    (self.left + 25, self.bot - 100),
+                    (self.left + 35, self.bot - 100),
+                    (self.left + 10, self.bot - 60),
+                ),
+            )
+            pygame.draw.polygon(
+                screen,
+                WHITE,
+                (
+                    (self.left + 60, self.bot - 60),
+                    (self.left + 35, self.bot - 100),
+                    (self.left + 25, self.bot - 100),
+                    (self.left + 50, self.bot - 60),
+                ),
+            )
+        pygame.draw.circle(screen, WHITE, (self.left + 30, self.bot - 115), 15)
