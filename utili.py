@@ -1,6 +1,11 @@
 import numpy as np
 from PIL import Image
 from models import *
+import pygame
+
+
+pygame.mixer.init()
+click_sound = pygame.mixer.Sound("data/click_sound.wav")
 
 
 def formatNumber(nb):
@@ -24,6 +29,7 @@ def exitButtonEvent(event, screen):
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
         mousePos = pygame.mouse.get_pos()
         if mousePos[0] > screen.get_width() - 30 and mousePos[1] < 30:
+            pygame.mixer.Sound.play(click_sound)
             pygame.quit()
             exit()
 
@@ -54,11 +60,14 @@ def drawExitButton(screen):
 def backButtonEvent(event, screen):
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
         mousePos = pygame.mouse.get_pos()
-        return (
+        if (
             mousePos[0] < screen.get_width() - 30
             and mousePos[0] > screen.get_width() - 50 - 5 - 10
             and mousePos[1] < 30
-        )
+        ):
+            pygame.mixer.Sound.play(click_sound)
+            return True
+        return False
 
 
 def drawBackButton(screen):

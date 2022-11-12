@@ -11,6 +11,7 @@ w, h = (windll.user32.GetSystemMetrics(0), windll.user32.GetSystemMetrics(1))
 # Pygame init stuff
 pygame.init()
 pygame.font.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((w, h))
 fonts = {
     "S": pygame.font.Font("data/Roboto-Regular.ttf", 25),
@@ -20,6 +21,9 @@ fonts = {
 clock = pygame.time.Clock()
 
 loadingScreen(screen, clock, fonts["M"])
+
+pygame.mixer.music.load("data/background_sound.wav")
+pygame.mixer.music.play(-1)
 
 URL = "https://api.le-systeme-solaire.net/rest/bodies"
 response = requests.get(URL)

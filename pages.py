@@ -5,6 +5,7 @@ from utili import *
 
 
 def selectGame(nbButton: int, screen, clock, allPlanetsJSON, fonts, firstImageRects):
+    pygame.mixer.Sound.play(click_sound)
     if nbButton == 0:
         telescopeGame(screen, fonts, clock, allPlanetsJSON, firstImageRects)
     elif nbButton == 1:
@@ -218,34 +219,37 @@ def telescopeGame(
                     affichage = False
                     pygame.quit()
                     exit()
-                if event.key == pygame.K_SPACE:
-                    speedMultiplier = 0
-                    updatePlanets = True
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mousePos = pygame.mouse.get_pos()
                 if cb_pos.getRect.collidepoint(mousePos):
+                    pygame.mixer.Sound.play(click_sound)
                     cb_pos.checked = not cb_pos.checked
                     scaledPos = not scaledPos
                     updatePlanets = True
 
                 elif cb_rad.getRect.collidepoint(mousePos):
+                    pygame.mixer.Sound.play(click_sound)
                     cb_rad.checked = not cb_rad.checked
                     scaledRadius = not scaledRadius
                     updatePlanets = True
 
                 elif speedDividerRect.collidepoint(mousePos):
                     if speedMultiplier > 1:
+                        pygame.mixer.Sound.play(click_sound)
                         speedMultiplier = int(speedMultiplier / 10)
                         updatePlanets = True
 
                 elif speedMultiplierRect.collidepoint(mousePos):
                     if speedMultiplier == 0:
+                        pygame.mixer.Sound.play(click_sound)
                         speedMultiplier = 1
                     elif speedMultiplier < 10**12:
+                        pygame.mixer.Sound.play(click_sound)
                         speedMultiplier = int(speedMultiplier * 10)
                         updatePlanets = True
 
                 elif speedStopRect.collidepoint(mousePos):
+                    pygame.mixer.Sound.play(click_sound)
                     speedMultiplier = 0
                     updatePlanets = True
 
@@ -380,10 +384,12 @@ def planetMapsGame(
                 for planet in allPlanets:
                     if planet.collidepoint(mousePos):
                         if planet.selected:
+                            pygame.mixer.Sound.play(click_sound)
                             planetsSelected.remove(planet)
                             planet.selected = not planet.selected
                         else:
                             if len(planetsSelected) < 2:
+                                pygame.mixer.Sound.play(click_sound)
                                 planetsSelected.append(planet)
                                 planet.selected = not planet.selected
 
@@ -528,10 +534,12 @@ def gravityJumpGame(
                 mousePos = pygame.mouse.get_pos()
                 for planet in allPlanets:
                     if planet.collidepoint(mousePos) and planet.name != "Le Soleil":
+                        pygame.mixer.Sound.play(click_sound)
                         planetSelected = planet
                 if pygame.Rect(0, screen.get_height() / 2 - 50, 100, 100).collidepoint(
                     mousePos
                 ):
+                    pygame.mixer.Sound.play(click_sound)
                     littleGuy = None
 
         if not planetSelected:
